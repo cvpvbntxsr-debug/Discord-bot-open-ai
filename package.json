@@ -1,0 +1,20 @@
+{
+  "name": "discord-bot-openai-carrier",
+  "version": "1.0.0",
+  "description": "Discord bot with OpenAI integration and carrier deal finder",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "keywords": ["discord", "bot", "openai", "carrier", "cellular"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "discord.js": "^14.14.1",
+    "dotenv": "^16.3.1",
+    "openai": "^4.24.1",
+    "axios": "^1.6.5"
+  }
+}
