@@ -1,7 +1,7 @@
 {
-  "name": "discord-bot-openai-carrier",
+  "name": "discord-bot-perplexity-carrier",
   "version": "1.0.0",
-  "description": "Discord bot with OpenAI integration and carrier deal finder",
+  "description": "Discord bot with Perplexity AI integration and carrier deal finder",
   "main": "index.js",
   "type": "module",
   "scripts": {

@@ -1,13 +1,13 @@
-# 📱 Discord Bot - OpenAI Carrier Assistant
+# 📱 Discord Bot - Perplexity AI Carrier Assistant
 
-A Discord bot powered by OpenAI that helps users find the best carrier deals and provides cellular/mobile carrier information.
+A Discord bot powered by Perplexity AI that helps users find the best carrier deals and provides cellular/mobile carrier information with real-time web search capabilities.
 
 ## ✨ Features
 
 ### 🤖 AI-Powered Q&A
-- Ask the bot any question using OpenAI's GPT-3.5
+- Ask the bot any question using Perplexity AI with real-time web search
 - Mention the bot or use `!ask` command
-- Get intelligent, context-aware responses
+- Get intelligent, up-to-date, and accurate responses
 
 ### 💰 Carrier Deal Finder
 - `!deals` - Find the best carrier deals currently available
@@ -27,7 +27,7 @@ A Discord bot powered by OpenAI that helps users find the best carrier deals and
 ### Prerequisites
 - Node.js 18+ installed
 - Discord Bot Token
-- OpenAI API Key
+- Perplexity API Key
 
 ### Step 1: Clone and Install
 
@@ -48,12 +48,12 @@ npm install
    - Message Content Intent
    - Server Members Intent (optional)
 
-### Step 3: Get Your OpenAI API Key
+### Step 3: Get Your Perplexity API Key
 
-1. Go to [OpenAI Platform](https://platform.openai.com/)
+1. Go to [Perplexity AI](https://www.perplexity.ai/)
 2. Sign up or log in
-3. Go to [API Keys](https://platform.openai.com/api-keys)
-4. Click "Create new secret key"
+3. Go to [API Settings](https://www.perplexity.ai/settings/api)
+4. Click "Generate API Key"
 5. Copy the key (you won't be able to see it again!)
 
 ### Step 4: Configure Environment Variables
@@ -66,7 +66,7 @@ Edit `.env` and add your tokens:
 
 ```env
 DISCORD_TOKEN=your_discord_bot_token_here
-OPENAI_API_KEY=your_openai_api_key_here
+PERPLEXITY_API_KEY=your_perplexity_api_key_here
 BOT_PREFIX=!
 ```
 
@@ -185,9 +185,9 @@ Discord-bot-open-ai/
 - Verify Message Content Intent is enabled in Discord Developer Portal
 - Check console for errors
 
-### OpenAI errors
+### Perplexity AI errors
 - Verify your API key is correct in `.env`
-- Check you have credits in your OpenAI account
+- Check you have credits in your Perplexity account
 - Ensure API key has proper permissions
 
 ### Permission errors
@@ -253,4 +253,4 @@ If you encounter issues:
 
 ---
 
-Built with ❤️ using Discord.js and OpenAI
+Built with ❤️ using Discord.js and Perplexity AI

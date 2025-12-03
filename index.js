@@ -13,9 +13,10 @@ const client = new Client({
   ],
 });
 
-// Initialize OpenAI
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+// Initialize Perplexity AI (uses OpenAI SDK)
+const perplexity = new OpenAI({
+  apiKey: process.env.PERPLEXITY_API_KEY,
+  baseURL: 'https://api.perplexity.ai',
 });
 
 const PREFIX = process.env.BOT_PREFIX || '!';
@@ -148,7 +149,7 @@ client.on('messageCreate', async (message) => {
   }
 });
 
-// OpenAI Ask Command
+// Perplexity AI Ask Command
 async function handleAskCommand(message) {
   const question = message.content
     .replace(`<@${client.user.id}>`, '')
@@ -159,15 +160,15 @@ async function handleAskCommand(message) {
     return message.reply('Please ask me a question! Example: `!ask What is 5G?`');
   }
 
-  const thinkingMsg = await message.reply('🤔 Thinking...');
+  const thinkingMsg = await message.reply('🔍 Searching for an answer...');
 
   try {
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
+    const completion = await perplexity.chat.completions.create({
+      model: 'llama-3.1-sonar-small-128k-online',
       messages: [
         {
           role: 'system',
-          content: 'You are a helpful assistant in a Discord server. Provide clear, concise answers. If asked about carriers or cellular topics, provide expert information.',
+          content: 'You are a helpful assistant in a Discord server. Provide clear, concise, and accurate answers with up-to-date information. If asked about carriers or cellular topics, provide expert information with current data.',
         },
         {
           role: 'user',
@@ -175,24 +176,24 @@ async function handleAskCommand(message) {
         },
       ],
       max_tokens: 500,
-      temperature: 0.7,
+      temperature: 0.2,
     });
 
     const answer = completion.choices[0].message.content;
 
     const embed = new EmbedBuilder()
-      .setColor('#0099ff')
-      .setTitle('💡 AI Assistant')
+      .setColor('#20808d')
+      .setTitle('💡 Perplexity AI Assistant')
       .addFields(
         { name: '❓ Question', value: question.substring(0, 1024) },
         { name: '✅ Answer', value: answer.substring(0, 1024) }
       )
-      .setFooter({ text: 'Powered by OpenAI' })
+      .setFooter({ text: 'Powered by Perplexity AI - Real-time web search' })
       .setTimestamp();
 
     await thinkingMsg.edit({ content: null, embeds: [embed] });
   } catch (error) {
-    console.error('OpenAI Error:', error);
+    console.error('Perplexity AI Error:', error);
     await thinkingMsg.edit('❌ Sorry, I encountered an error processing your question. Please try again later.');
   }
 }
@@ -474,9 +475,9 @@ if (!process.env.DISCORD_TOKEN) {
   process.exit(1);
 }
 
-if (!process.env.OPENAI_API_KEY) {
-  console.error('⚠️  OPENAI_API_KEY not found in environment variables!');
-  console.error('OpenAI features will not work. Please add your API key to .env file.');
+if (!process.env.PERPLEXITY_API_KEY) {
+  console.error('⚠️  PERPLEXITY_API_KEY not found in environment variables!');
+  console.error('Perplexity AI features will not work. Please add your API key to .env file.');
 }
 
 client.login(process.env.DISCORD_TOKEN);
