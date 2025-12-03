@@ -8,7 +8,7 @@
     "start": "node index.js",
     "dev": "node --watch index.js"
   },
-  "keywords": ["discord", "bot", "openai", "carrier", "cellular"],
+  "keywords": ["discord", "bot", "perplexity", "ai", "carrier", "cellular"],
   "author": "",
   "license": "MIT",
   "dependencies": {

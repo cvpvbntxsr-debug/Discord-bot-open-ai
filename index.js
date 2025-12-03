@@ -104,7 +104,7 @@ client.on('messageCreate', async (message) => {
   // Ignore bot messages
   if (message.author.bot) return;
 
-  // Handle OpenAI questions (messages starting with the bot mention or prefix + "ask")
+  // Handle AI questions (messages starting with the bot mention or prefix + "ask")
   if (message.mentions.has(client.user) || message.content.startsWith(`${PREFIX}ask`)) {
     await handleAskCommand(message);
     return;
