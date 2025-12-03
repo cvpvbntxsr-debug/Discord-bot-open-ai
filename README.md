@@ -4,6 +4,11 @@ A Discord bot powered by Perplexity AI that helps users find the best carrier de
 
 ## ✨ Features
 
+### 👤 User-Installable
+- **Install to your Discord account** - Use the bot anywhere!
+- Works in DMs, servers, and group chats
+- No need to add to every server individually
+
 ### 🤖 AI-Powered Q&A
 - Ask the bot any question using Perplexity AI with real-time web search
 - Mention the bot or use `!ask` command
@@ -41,11 +46,24 @@ npm install
 
 1. Go to [Discord Developer Portal](https://discord.com/developers/applications)
 2. Click "New Application" and give it a name
-3. Go to the "Bot" tab
-4. Click "Add Bot"
-5. Under "Token", click "Reset Token" and copy it
-6. Enable these Privileged Gateway Intents:
-   - Message Content Intent
+3. Go to the "Installation" tab
+4. **Enable User Install:**
+   - Under "Installation Contexts", check **"User Install"**
+   - Under "Install Link", select "Discord Provided Link"
+   - Under "Default Install Settings", add these scopes:
+     - `bot`
+     - `applications.commands`
+   - Add these permissions:
+     - Send Messages
+     - Send Messages in Threads
+     - Embed Links
+     - Read Message History
+     - Use External Emojis
+5. Go to the "Bot" tab
+6. Click "Add Bot" (if not already created)
+7. Under "Token", click "Reset Token" and copy it
+8. Enable these Privileged Gateway Intents:
+   - **Message Content Intent** (Required)
    - Server Members Intent (optional)
 
 ### Step 3: Get Your Perplexity API Key
@@ -70,8 +88,17 @@ PERPLEXITY_API_KEY=your_perplexity_api_key_here
 BOT_PREFIX=!
 ```
 
-### Step 5: Invite Bot to Your Server
+### Step 5: Install the Bot
 
+**Option A: Install to Your User Account (Use Everywhere)**
+1. In Discord Developer Portal, go to "Installation" tab
+2. Copy the "Install Link" at the top
+3. Open the link in your browser
+4. Click "Add to User"
+5. Authorize the bot
+6. Now you can use it in DMs, any server, or group chats!
+
+**Option B: Install to a Specific Server Only**
 1. In Discord Developer Portal, go to "OAuth2" > "URL Generator"
 2. Select scopes:
    - `bot`
@@ -81,9 +108,11 @@ BOT_PREFIX=!
    - Send Messages in Threads
    - Embed Links
    - Read Message History
-   - Use Slash Commands
+   - Use External Emojis
 4. Copy the generated URL and open it in your browser
 5. Select your server and authorize
+
+> **Recommended:** Use Option A (User Install) to use the bot everywhere!
 
 ### Step 6: Run the Bot
 

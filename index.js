@@ -97,6 +97,7 @@ const coverageInfo = {
 client.on('ready', () => {
   console.log(`✅ Bot logged in as ${client.user.tag}`);
   console.log(`📡 Serving ${client.guilds.cache.size} servers`);
+  console.log(`👤 User-installable: Ready for DMs and server use!`);
   client.user.setActivity('!help for commands', { type: 'WATCHING' });
 });
 
@@ -203,7 +204,7 @@ async function handleHelpCommand(message) {
   const embed = new EmbedBuilder()
     .setColor('#00ff00')
     .setTitle('📱 Carrier Bot - Command List')
-    .setDescription('Your AI-powered cellular carrier assistant!')
+    .setDescription('Your AI-powered cellular carrier assistant!\n✨ **Works in DMs, servers, and group chats!**')
     .addFields(
       {
         name: '🤖 AI Commands',
@@ -226,7 +227,7 @@ async function handleHelpCommand(message) {
         value: `\`${PREFIX}carriers\` - List all major carriers\n\`${PREFIX}help\` - Show this help message`,
       }
     )
-    .setFooter({ text: 'Prefix: ' + PREFIX })
+    .setFooter({ text: 'Prefix: ' + PREFIX + ' • Use me anywhere!' })
     .setTimestamp();
 
   await message.reply({ embeds: [embed] });
