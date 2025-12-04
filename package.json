@@ -1,14 +1,14 @@
 {
-  "name": "discord-bot-perplexity-carrier",
-  "version": "1.0.0",
-  "description": "Discord bot with Perplexity AI integration and carrier deal finder",
+  "name": "discord-bot-openrouter-carrier",
+  "version": "2.0.0",
+  "description": "Discord bot with OpenRouter.ai integration, Gen Z personality, conversational memory, and carrier deal finder",
   "main": "index.js",
   "type": "module",
   "scripts": {
     "start": "node index.js",
     "dev": "node --watch index.js"
   },
-  "keywords": ["discord", "bot", "perplexity", "ai", "carrier", "cellular"],
+  "keywords": ["discord", "bot", "openrouter", "ai", "carrier", "cellular", "genz", "conversational"],
   "author": "",
   "license": "MIT",
   "dependencies": {

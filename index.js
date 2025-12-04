@@ -1,4 +1,4 @@
-import { Client, GatewayIntentBits, EmbedBuilder } from 'discord.js';
+import { Client, GatewayIntentBits } from 'discord.js';
 import OpenAI from 'openai';
 import dotenv from 'dotenv';
 
@@ -13,13 +13,16 @@ const client = new Client({
   ],
 });
 
-// Initialize Perplexity AI (uses OpenAI SDK)
-const perplexity = new OpenAI({
-  apiKey: process.env.PERPLEXITY_API_KEY,
-  baseURL: 'https://api.perplexity.ai',
+// Initialize OpenRouter AI (uses OpenAI SDK)
+const openrouter = new OpenAI({
+  apiKey: process.env.OPENROUTER_API_KEY,
+  baseURL: 'https://openrouter.ai/api/v1',
 });
 
 const PREFIX = process.env.BOT_PREFIX || '!';
+
+// Conversation memory - stores recent messages per channel/user
+const conversationHistory = new Map();
 
 // Carrier data for deals (simulated - in production, this could fetch from APIs)
 const carrierDeals = [
@@ -98,6 +101,7 @@ client.on('ready', () => {
   console.log(`✅ Bot logged in as ${client.user.tag}`);
   console.log(`📡 Serving ${client.guilds.cache.size} servers`);
   console.log(`👤 User-installable: Ready for DMs and server use!`);
+  console.log(`🤖 Powered by OpenRouter.ai - Conversational mode enabled!`);
   client.user.setActivity('!help for commands', { type: 'WATCHING' });
 });
 
@@ -150,7 +154,7 @@ client.on('messageCreate', async (message) => {
   }
 });
 
-// Perplexity AI Ask Command
+// AI Chat Command with Memory
 async function handleAskCommand(message) {
   const question = message.content
     .replace(`<@${client.user.id}>`, '')
@@ -158,79 +162,88 @@ async function handleAskCommand(message) {
     .trim();
 
   if (!question) {
-    return message.reply('Please ask me a question! Example: `!ask What is 5G?`');
+    return message.reply('yo what did u wanna ask me lol just say !ask and then ur question');
   }
 
-  const thinkingMsg = await message.reply('🔍 Searching for an answer...');
+  const thinkingMsg = await message.reply('typing...');
 
   try {
-    const completion = await perplexity.chat.completions.create({
-      model: 'llama-3.1-sonar-small-128k-online',
+    // Get conversation history for this user
+    const userId = message.author.id;
+    if (!conversationHistory.has(userId)) {
+      conversationHistory.set(userId, []);
+    }
+
+    const history = conversationHistory.get(userId);
+
+    // Add user message to history
+    history.push({
+      role: 'user',
+      content: question,
+    });
+
+    // Keep only last 10 messages to avoid token limits
+    if (history.length > 10) {
+      history.shift();
+      history.shift(); // Remove both user and assistant message
+    }
+
+    const completion = await openrouter.chat.completions.create({
+      model: process.env.OPENROUTER_MODEL || 'meta-llama/llama-3.1-8b-instruct:free',
       messages: [
         {
           role: 'system',
-          content: 'You are a helpful assistant in a Discord server. Provide clear, concise, and accurate answers with up-to-date information. If asked about carriers or cellular topics, provide expert information with current data.',
+          content: 'You are a super chill Gen Z bot in a Discord server. Talk like you\'re texting your bestie - use slang, abbreviations, lowercase, be funny and relatable. Drop "fr fr", "ngl", "lowkey", "highkey", "no cap", "bet", "valid", etc. Be supportive but also roast people in a friendly way. Keep it real and conversational. If someone asks about carriers or phones, still be helpful but keep that Gen Z energy. Don\'t use emojis unless it feels natural. Be authentic and fun!',
         },
-        {
-          role: 'user',
-          content: question,
-        },
+        ...history,
       ],
       max_tokens: 500,
-      temperature: 0.2,
+      temperature: 0.9,
     });
 
     const answer = completion.choices[0].message.content;
 
-    const embed = new EmbedBuilder()
-      .setColor('#20808d')
-      .setTitle('💡 Perplexity AI Assistant')
-      .addFields(
-        { name: '❓ Question', value: question.substring(0, 1024) },
-        { name: '✅ Answer', value: answer.substring(0, 1024) }
-      )
-      .setFooter({ text: 'Powered by Perplexity AI - Real-time web search' })
-      .setTimestamp();
+    // Add assistant response to history
+    history.push({
+      role: 'assistant',
+      content: answer,
+    });
 
-    await thinkingMsg.edit({ content: null, embeds: [embed] });
+    await thinkingMsg.edit(answer);
   } catch (error) {
-    console.error('Perplexity AI Error:', error);
-    await thinkingMsg.edit('❌ Sorry, I encountered an error processing your question. Please try again later.');
+    console.error('OpenRouter AI Error:', error);
+    await thinkingMsg.edit('bruh my brain crashed rn try again in a sec lmao');
   }
 }
 
 // Help Command
 async function handleHelpCommand(message) {
-  const embed = new EmbedBuilder()
-    .setColor('#00ff00')
-    .setTitle('📱 Carrier Bot - Command List')
-    .setDescription('Your AI-powered cellular carrier assistant!\n✨ **Works in DMs, servers, and group chats!**')
-    .addFields(
-      {
-        name: '🤖 AI Commands',
-        value: `\`${PREFIX}ask <question>\` - Ask me anything!\n\`@${client.user.username} <question>\` - Mention me with a question`,
-      },
-      {
-        name: '💰 Carrier Deal Commands',
-        value: `\`${PREFIX}deals\` - Find the best carrier deals\n\`${PREFIX}bestdeal\` - Same as deals`,
-      },
-      {
-        name: '📡 Coverage & Network',
-        value: `\`${PREFIX}coverage <carrier>\` - Check coverage info\n\`${PREFIX}network\` - Network technology overview`,
-      },
-      {
-        name: '📊 Plan Tools',
-        value: `\`${PREFIX}compare <carrier1> <carrier2>\` - Compare carriers\n\`${PREFIX}plans <carrier>\` - View carrier plans\n\`${PREFIX}datacalc <gb>\` - Calculate data usage`,
-      },
-      {
-        name: '📋 Information',
-        value: `\`${PREFIX}carriers\` - List all major carriers\n\`${PREFIX}help\` - Show this help message`,
-      }
-    )
-    .setFooter({ text: 'Prefix: ' + PREFIX + ' • Use me anywhere!' })
-    .setTimestamp();
+  const helpText = `**yo here's what i can do:**
 
-  await message.reply({ embeds: [embed] });
+🤖 **chat with me:**
+${PREFIX}ask <question> - literally ask me anything and we can just vibe
+@${client.user.username} <message> - or just @ me and we can chat
+
+💰 **carrier deals:**
+${PREFIX}deals - best carrier deals rn no cap
+${PREFIX}bestdeal - same thing lol
+
+📡 **coverage stuff:**
+${PREFIX}coverage <carrier> - check who's got bars where
+${PREFIX}network - learn about 5g and all that tech
+
+📊 **compare plans:**
+${PREFIX}compare <carrier1> <carrier2> - see which one hits different
+${PREFIX}plans <carrier> - peep a carrier's plans
+${PREFIX}datacalc <gb> - see what u can do with ur data
+
+📋 **general info:**
+${PREFIX}carriers - all the carriers u should know about
+${PREFIX}help - shows this again lol
+
+btw i work everywhere - dms, servers, wherever u need me fr`;
+
+  await message.reply(helpText);
 }
 
 // Best Deals Command
@@ -239,56 +252,51 @@ async function handleDealsCommand(message) {
   const sortedDeals = [...carrierDeals].sort((a, b) => b.rating - a.rating);
   const topDeals = sortedDeals.slice(0, 3);
 
-  const embed = new EmbedBuilder()
-    .setColor('#ffd700')
-    .setTitle('🏆 Best Carrier Deals Right Now')
-    .setDescription('Top 3 carrier plans based on value and ratings:')
-    .setTimestamp();
+  let dealsText = '**ok so here are the top carrier deals rn:**\n\n';
 
   topDeals.forEach((deal, index) => {
     const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉';
-    embed.addFields({
-      name: `${medal} ${deal.carrier} - ${deal.plan}`,
-      value: `**Price:** ${deal.price}\n**Data:** ${deal.data}\n**Perks:** ${deal.perks}\n**Rating:** ${'⭐'.repeat(Math.floor(deal.rating))} (${deal.rating}/5)`,
-    });
+    dealsText += `${medal} **${deal.carrier} - ${deal.plan}**\n`;
+    dealsText += `price: ${deal.price}\n`;
+    dealsText += `data: ${deal.data}\n`;
+    dealsText += `perks: ${deal.perks}\n`;
+    dealsText += `rating: ${'⭐'.repeat(Math.floor(deal.rating))} (${deal.rating}/5)\n\n`;
   });
 
-  embed.setFooter({ text: 'Deals updated regularly • Use !compare to compare carriers' });
+  dealsText += 'use !compare to see how they stack up against each other fr';
 
-  await message.reply({ embeds: [embed] });
+  await message.reply(dealsText);
 }
 
 // Coverage Command
 async function handleCoverageCommand(message, args) {
   if (args.length === 0) {
-    return message.reply(`Please specify a carrier! Example: \`${PREFIX}coverage verizon\`\nAvailable: verizon, tmobile, att, mint, visible`);
+    return message.reply(`yo which carrier? try like ${PREFIX}coverage verizon\navailable: verizon, tmobile, att, mint, visible`);
   }
 
   const carrier = args[0].toLowerCase();
   const info = coverageInfo[carrier];
 
   if (!info) {
-    return message.reply(`❌ Carrier not found. Available: ${Object.keys(coverageInfo).join(', ')}`);
+    return message.reply(`bruh that carrier aint in my list. try: ${Object.keys(coverageInfo).join(', ')}`);
   }
 
-  const embed = new EmbedBuilder()
-    .setColor('#9b59b6')
-    .setTitle(`📡 ${carrier.charAt(0).toUpperCase() + carrier.slice(1)} Coverage Info`)
-    .addFields(
-      { name: '🌐 Network Type', value: info.network },
-      { name: '📍 Coverage Area', value: info.coverage },
-      { name: '💪 Strength', value: info.strength }
-    )
-    .setFooter({ text: 'Coverage may vary by location' })
-    .setTimestamp();
+  const carrierName = carrier.charAt(0).toUpperCase() + carrier.slice(1);
+  const coverageText = `**📡 ${carrierName} coverage info:**
 
-  await message.reply({ embeds: [embed] });
+network: ${info.network}
+coverage: ${info.coverage}
+strength: ${info.strength}
+
+*coverage varies by location obv`;
+
+  await message.reply(coverageText);
 }
 
 // Compare Carriers Command
 async function handleCompareCommand(message, args) {
   if (args.length < 2) {
-    return message.reply(`Please specify two carriers to compare!\nExample: \`${PREFIX}compare verizon tmobile\`\nAvailable: verizon, tmobile, att, mint, visible`);
+    return message.reply(`i need two carriers to compare bro\nexample: ${PREFIX}compare verizon tmobile\navailable: verizon, tmobile, att, mint, visible`);
   }
 
   const carrier1 = args[0].toLowerCase();
@@ -298,41 +306,37 @@ async function handleCompareCommand(message, args) {
   const deal2 = carrierDeals.find(d => d.carrier.toLowerCase().includes(carrier2));
 
   if (!deal1 || !deal2) {
-    return message.reply('❌ One or both carriers not found. Check spelling!');
+    return message.reply('cant find one or both of those carriers, check ur spelling lol');
   }
 
-  const embed = new EmbedBuilder()
-    .setColor('#e67e22')
-    .setTitle('⚖️ Carrier Comparison')
-    .setDescription(`Comparing ${deal1.carrier} vs ${deal2.carrier}`)
-    .addFields(
-      { name: '\u200B', value: '**📱 ' + deal1.carrier + '**' },
-      { name: 'Plan', value: deal1.plan, inline: true },
-      { name: 'Price', value: deal1.price, inline: true },
-      { name: 'Data', value: deal1.data, inline: true },
-      { name: 'Perks', value: deal1.perks },
-      { name: 'Rating', value: '⭐'.repeat(Math.floor(deal1.rating)) + ` (${deal1.rating}/5)` },
-      { name: '\u200B', value: '**📱 ' + deal2.carrier + '**' },
-      { name: 'Plan', value: deal2.plan, inline: true },
-      { name: 'Price', value: deal2.price, inline: true },
-      { name: 'Data', value: deal2.data, inline: true },
-      { name: 'Perks', value: deal2.perks },
-      { name: 'Rating', value: '⭐'.repeat(Math.floor(deal2.rating)) + ` (${deal2.rating}/5)` }
-    )
-    .setTimestamp();
+  const compareText = `**⚖️ ${deal1.carrier} vs ${deal2.carrier}**
 
-  await message.reply({ embeds: [embed] });
+**📱 ${deal1.carrier}:**
+plan: ${deal1.plan}
+price: ${deal1.price}
+data: ${deal1.data}
+perks: ${deal1.perks}
+rating: ${'⭐'.repeat(Math.floor(deal1.rating))} (${deal1.rating}/5)
+
+**📱 ${deal2.carrier}:**
+plan: ${deal2.plan}
+price: ${deal2.price}
+data: ${deal2.data}
+perks: ${deal2.perks}
+rating: ${'⭐'.repeat(Math.floor(deal2.rating))} (${deal2.rating}/5)`;
+
+  await message.reply(compareText);
 }
 
 // Data Calculator Command
 async function handleDataCalcCommand(message, args) {
   if (args.length === 0) {
-    return message.reply(`Calculate how much you can do with your data!\nExample: \`${PREFIX}datacalc 10\` (for 10GB)`);
+    return message.reply(`tell me how many gb and ill show u what u can do with it\nexample: ${PREFIX}datacalc 10`);
   }
 
   const gb = parseFloat(args[0]);
   if (isNaN(gb) || gb <= 0) {
-    return message.reply('❌ Please provide a valid number of GB!');
+    return message.reply('bruh gimme a real number lol');
   }
 
   // Rough estimates
@@ -343,121 +347,104 @@ async function handleDataCalcCommand(message, args) {
     emails: Math.floor(gb * 10000), // ~10,000 emails per GB
   };
 
-  const embed = new EmbedBuilder()
-    .setColor('#3498db')
-    .setTitle(`📊 Data Usage Calculator - ${gb}GB`)
-    .setDescription('Approximate usage with your data:')
-    .addFields(
-      { name: '🎬 Video Streaming', value: `~${hours.streaming} hours (SD quality)`, inline: true },
-      { name: '🎵 Music Streaming', value: `~${hours.music} hours`, inline: true },
-      { name: '🌐 Web Browsing', value: `~${hours.browsing} pages`, inline: true },
-      { name: '📧 Emails', value: `~${hours.emails} emails (text)`, inline: true },
-      { name: '📱 Social Media', value: `~${Math.floor(gb * 50)} hours`, inline: true },
-      { name: '🎮 Online Gaming', value: `~${Math.floor(gb * 100)} hours`, inline: true }
-    )
-    .setFooter({ text: 'Estimates may vary based on quality settings and usage patterns' })
-    .setTimestamp();
+  const calcText = `**📊 with ${gb}GB u can do:**
 
-  await message.reply({ embeds: [embed] });
+🎬 video streaming: ~${hours.streaming} hours (sd quality)
+🎵 music streaming: ~${hours.music} hours
+🌐 web browsing: ~${hours.browsing} pages
+📧 emails: ~${hours.emails} emails (text only)
+📱 social media: ~${Math.floor(gb * 50)} hours
+🎮 online gaming: ~${Math.floor(gb * 100)} hours
+
+*these are estimates obv, depends on quality and stuff`;
+
+  await message.reply(calcText);
 }
 
 // Plans Command
 async function handlePlansCommand(message, args) {
   if (args.length === 0) {
     // Show all plans
-    const embed = new EmbedBuilder()
-      .setColor('#2ecc71')
-      .setTitle('📋 All Carrier Plans')
-      .setDescription('Current plans from major carriers:')
-      .setTimestamp();
+    let plansText = '**📋 all the carrier plans:**\n\n';
 
     carrierDeals.forEach(deal => {
-      embed.addFields({
-        name: `${deal.carrier} - ${deal.plan}`,
-        value: `💵 ${deal.price} | 📶 ${deal.data}\n${deal.perks}`,
-      });
+      plansText += `**${deal.carrier} - ${deal.plan}**\n`;
+      plansText += `💵 ${deal.price} | 📶 ${deal.data}\n`;
+      plansText += `${deal.perks}\n\n`;
     });
 
-    await message.reply({ embeds: [embed] });
+    await message.reply(plansText);
   } else {
     // Show specific carrier plans
     const carrier = args[0].toLowerCase();
     const deal = carrierDeals.find(d => d.carrier.toLowerCase().includes(carrier));
 
     if (!deal) {
-      return message.reply('❌ Carrier not found!');
+      return message.reply('cant find that carrier bro');
     }
 
-    const embed = new EmbedBuilder()
-      .setColor('#2ecc71')
-      .setTitle(`📋 ${deal.carrier} Plans`)
-      .addFields(
-        { name: 'Plan Name', value: deal.plan },
-        { name: 'Price', value: deal.price },
-        { name: 'Data', value: deal.data },
-        { name: 'Included Perks', value: deal.perks },
-        { name: 'Rating', value: '⭐'.repeat(Math.floor(deal.rating)) + ` (${deal.rating}/5)` }
-      )
-      .setTimestamp();
+    const planText = `**📋 ${deal.carrier} plan:**
 
-    await message.reply({ embeds: [embed] });
+plan name: ${deal.plan}
+price: ${deal.price}
+data: ${deal.data}
+perks: ${deal.perks}
+rating: ${'⭐'.repeat(Math.floor(deal.rating))} (${deal.rating}/5)`;
+
+    await message.reply(planText);
   }
 }
 
 // Network Technology Command
 async function handleNetworkCommand(message) {
-  const embed = new EmbedBuilder()
-    .setColor('#e74c3c')
-    .setTitle('📡 Mobile Network Technologies')
-    .setDescription('Understanding cellular network generations:')
-    .addFields(
-      {
-        name: '5G (Fifth Generation)',
-        value: '⚡ Ultra-fast speeds (up to 10 Gbps)\n📡 Low latency (~1ms)\n🎯 Best for: Streaming, gaming, AR/VR',
-      },
-      {
-        name: '4G LTE (Long-Term Evolution)',
-        value: '🚀 Fast speeds (up to 100 Mbps)\n📡 Moderate latency (~50ms)\n🎯 Best for: Video calls, HD streaming',
-      },
-      {
-        name: '5G Types',
-        value: '**mmWave (Ultra Wideband):** Fastest, short range\n**Mid-band:** Balance of speed & coverage\n**Low-band:** Widest coverage, slower speeds',
-      },
-      {
-        name: 'Network Bands',
-        value: '📻 Different carriers use different frequency bands\n🗼 Lower frequencies = better building penetration\n⚡ Higher frequencies = faster speeds',
-      }
-    )
-    .setFooter({ text: 'Use !coverage <carrier> to check specific carrier networks' })
-    .setTimestamp();
+  const networkText = `**📡 mobile network tech explained:**
 
-  await message.reply({ embeds: [embed] });
+**5g (fifth gen):**
+⚡ ultra fast speeds (up to 10 gbps)
+📡 super low latency (~1ms)
+🎯 best for: streaming, gaming, ar/vr
+
+**4g lte:**
+🚀 fast speeds (up to 100 mbps)
+📡 decent latency (~50ms)
+🎯 best for: video calls, hd streaming
+
+**5g types:**
+mmwave (ultra wideband): fastest but short range
+mid-band: balance of speed & coverage
+low-band: widest coverage but slower
+
+**network bands:**
+📻 different carriers use different frequencies
+🗼 lower freq = better building penetration
+⚡ higher freq = faster speeds
+
+use !coverage <carrier> to check specific networks`;
+
+  await message.reply(networkText);
 }
 
 // Carriers List Command
 async function handleCarriersCommand(message) {
-  const embed = new EmbedBuilder()
-    .setColor('#1abc9c')
-    .setTitle('📱 Major US Carriers')
-    .setDescription('Overview of cellular carriers:')
-    .addFields(
-      {
-        name: '🏢 Major Carriers (MNO)',
-        value: '**Verizon** - Largest network, best rural coverage\n**T-Mobile** - Largest 5G network, competitive pricing\n**AT&T** - Nationwide coverage, business focus',
-      },
-      {
-        name: '💰 Budget Carriers (MVNO)',
-        value: '**Mint Mobile** - T-Mobile network, prepaid plans\n**Visible** - Verizon network, unlimited plans\n**Cricket** - AT&T network, affordable\n**Metro by T-Mobile** - T-Mobile network',
-      },
-      {
-        name: '📊 What\'s an MVNO?',
-        value: 'Mobile Virtual Network Operators rent network access from major carriers, offering lower prices without owning infrastructure.',
-      }
-    )
-    .setFooter({ text: 'Use !deals to see the best current offers' })
-    .setTimestamp();
+  const carriersText = `**📱 major us carriers:**
 
-  await message.reply({ embeds: [embed] });
+**🏢 big ones (mno):**
+**verizon** - biggest network, best rural coverage
+**t-mobile** - largest 5g network, competitive pricing
+**at&t** - nationwide coverage, business focused
+
+**💰 budget options (mvno):**
+**mint mobile** - uses t-mobile network, prepaid plans
+**visible** - uses verizon network, unlimited plans
+**cricket** - uses at&t network, affordable
+**metro by t-mobile** - uses t-mobile network
+
+**what's an mvno?**
+mobile virtual network operators rent network access from the big carriers so they can offer lower prices without owning their own infrastructure
+
+use !deals to see the best current offers fr`;
+
+  await message.reply(carriersText);
 }
 
 // Error handling
@@ -476,9 +463,9 @@ if (!process.env.DISCORD_TOKEN) {
   process.exit(1);
 }
 
-if (!process.env.PERPLEXITY_API_KEY) {
-  console.error('⚠️  PERPLEXITY_API_KEY not found in environment variables!');
-  console.error('Perplexity AI features will not work. Please add your API key to .env file.');
+if (!process.env.OPENROUTER_API_KEY) {
+  console.error('⚠️  OPENROUTER_API_KEY not found in environment variables!');
+  console.error('OpenRouter AI features will not work. Please add your API key to .env file.');
 }
 
 client.login(process.env.DISCORD_TOKEN);
