@@ -109,6 +109,21 @@ client.on('messageCreate', async (message) => {
   // Ignore bot messages
   if (message.author.bot) return;
 
+  // Check if message is a reply to the bot
+  const isReplyToBot = message.reference && message.type === 19; // 19 = REPLY message type
+  if (isReplyToBot) {
+    try {
+      const repliedMessage = await message.channel.messages.fetch(message.reference.messageId);
+      if (repliedMessage.author.id === client.user.id) {
+        // User is replying to the bot
+        await handleAskCommand(message, true);
+        return;
+      }
+    } catch (error) {
+      console.error('Error fetching replied message:', error);
+    }
+  }
+
   // Handle AI questions (messages starting with the bot mention or prefix + "ask")
   if (message.mentions.has(client.user) || message.content.startsWith(`${PREFIX}ask`)) {
     await handleAskCommand(message);
@@ -155,11 +170,20 @@ client.on('messageCreate', async (message) => {
 });
 
 // AI Chat Command with Memory
-async function handleAskCommand(message) {
-  const question = message.content
-    .replace(`<@${client.user.id}>`, '')
-    .replace(`${PREFIX}ask`, '')
-    .trim();
+async function handleAskCommand(message, isReply = false) {
+  let question;
+
+  if (isReply) {
+    // If it's a reply, use the entire message content
+    question = message.content.trim();
+  } else {
+    // Otherwise, remove the command/mention prefix
+    question = message.content
+      .replace(`<@${client.user.id}>`, '')
+      .replace(`<@!${client.user.id}>`, '') // Handle nickname mentions
+      .replace(`${PREFIX}ask`, '')
+      .trim();
+  }
 
   if (!question) {
     return message.reply('yo what did u wanna ask me lol just say !ask and then ur question');
@@ -223,6 +247,7 @@ async function handleHelpCommand(message) {
 🤖 **chat with me:**
 ${PREFIX}ask <question> - literally ask me anything and we can just vibe
 @${client.user.username} <message> - or just @ me and we can chat
+💬 reply to my messages - just hit reply and keep the convo going
 
 💰 **carrier deals:**
 ${PREFIX}deals - best carrier deals rn no cap
