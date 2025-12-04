@@ -10,3 +10,7 @@ yarn-error.log*
 *.swp
 *.swo
 *~
+
+# Database file
+conversations.db
+conversations.db-journal

@@ -1,6 +1,7 @@
 import { Client, GatewayIntentBits } from 'discord.js';
 import OpenAI from 'openai';
 import dotenv from 'dotenv';
+import { saveMessage, getConversationHistory, clearUserHistory, getTotalMessages, getUniqueUserCount, closeDatabase } from './database.js';
 
 dotenv.config();
 
@@ -20,9 +21,6 @@ const openrouter = new OpenAI({
 });
 
 const PREFIX = process.env.BOT_PREFIX || '!';
-
-// Conversation memory - stores recent messages per channel/user
-const conversationHistory = new Map();
 
 // Carrier data for deals (simulated - in production, this could fetch from APIs)
 const carrierDeals = [
@@ -102,6 +100,7 @@ client.on('ready', () => {
   console.log(`📡 Serving ${client.guilds.cache.size} servers`);
   console.log(`👤 User-installable: Ready for DMs and server use!`);
   console.log(`🤖 Powered by OpenRouter.ai - Conversational mode enabled!`);
+  console.log(`💾 Persistent memory: ${getTotalMessages()} messages from ${getUniqueUserCount()} users`);
   client.user.setActivity('!help for commands', { type: 'WATCHING' });
 });
 
@@ -163,6 +162,10 @@ client.on('messageCreate', async (message) => {
     case 'carriers':
       await handleCarriersCommand(message);
       break;
+    case 'forget':
+    case 'clear':
+      await handleForgetCommand(message);
+      break;
     default:
       // Unknown command - do nothing or provide help
       break;
@@ -192,25 +195,13 @@ async function handleAskCommand(message, isReply = false) {
   const thinkingMsg = await message.reply('typing...');
 
   try {
-    // Get conversation history for this user
     const userId = message.author.id;
-    if (!conversationHistory.has(userId)) {
-      conversationHistory.set(userId, []);
-    }
 
-    const history = conversationHistory.get(userId);
+    // Save user message to database
+    saveMessage(userId, 'user', question);
 
-    // Add user message to history
-    history.push({
-      role: 'user',
-      content: question,
-    });
-
-    // Keep only last 10 messages to avoid token limits
-    if (history.length > 10) {
-      history.shift();
-      history.shift(); // Remove both user and assistant message
-    }
+    // Get recent conversation history from database (last 10 messages)
+    const history = getConversationHistory(userId, 10);
 
     const completion = await openrouter.chat.completions.create({
       model: process.env.OPENROUTER_MODEL || 'meta-llama/llama-3.1-8b-instruct:free',
@@ -227,11 +218,8 @@ async function handleAskCommand(message, isReply = false) {
 
     const answer = completion.choices[0].message.content;
 
-    // Add assistant response to history
-    history.push({
-      role: 'assistant',
-      content: answer,
-    });
+    // Save assistant response to database
+    saveMessage(userId, 'assistant', answer);
 
     await thinkingMsg.edit(answer);
   } catch (error) {
@@ -264,9 +252,11 @@ ${PREFIX}datacalc <gb> - see what u can do with ur data
 
 📋 **general info:**
 ${PREFIX}carriers - all the carriers u should know about
+${PREFIX}forget - clear your chat history and start fresh
 ${PREFIX}help - shows this again lol
 
-btw i work everywhere - dms, servers, wherever u need me fr`;
+btw i work everywhere - dms, servers, wherever u need me fr
+💾 i remember everything we talk about, even after i restart!`;
 
   await message.reply(helpText);
 }
@@ -472,6 +462,13 @@ use !deals to see the best current offers fr`;
   await message.reply(carriersText);
 }
 
+// Forget/Clear Command
+async function handleForgetCommand(message) {
+  const userId = message.author.id;
+  clearUserHistory(userId);
+  await message.reply('bet, cleared your chat history! we can start fresh now fr');
+}
+
 // Error handling
 client.on('error', (error) => {
   console.error('Discord client error:', error);
@@ -479,6 +476,19 @@ client.on('error', (error) => {
 
 process.on('unhandledRejection', (error) => {
   console.error('Unhandled promise rejection:', error);
+});
+
+// Graceful shutdown
+process.on('SIGINT', () => {
+  console.log('\n🛑 Shutting down gracefully...');
+  closeDatabase();
+  process.exit(0);
+});
+
+process.on('SIGTERM', () => {
+  console.log('\n🛑 Shutting down gracefully...');
+  closeDatabase();
+  process.exit(0);
 });
 
 // Login
