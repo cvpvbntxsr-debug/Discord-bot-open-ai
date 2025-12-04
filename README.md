@@ -1,6 +1,6 @@
 # 📱 Discord Bot - Gen Z Carrier Assistant
 
-A Discord bot powered by OpenRouter.ai that helps users find the best carrier deals and provides cellular/mobile carrier information. Features a fun Gen Z personality and conversational memory!
+A Discord bot powered by OpenAI that helps users find the best carrier deals and provides cellular/mobile carrier information. Features a fun Gen Z personality and persistent conversational memory!
 
 ## ✨ Features
 
@@ -10,10 +10,10 @@ A Discord bot powered by OpenRouter.ai that helps users find the best carrier de
 - No need to add to every server individually
 
 ### 🤖 AI-Powered Chat
-- Talk to the bot using OpenRouter.ai - it has conversational memory!
+- Talk to the bot using OpenAI GPT-4o-mini - blazing fast responses!
 - Fun Gen Z personality - talks like you're texting your bestie
-- Mention the bot or use `!ask` command
-- Bot remembers your previous messages for natural conversations
+- Persistent memory - remembers ALL your conversations forever
+- Mention the bot, reply to it, or use `!ask` command
 
 ### 💰 Carrier Deal Finder
 - `!deals` - Find the best carrier deals currently available
@@ -33,7 +33,7 @@ A Discord bot powered by OpenRouter.ai that helps users find the best carrier de
 ### Prerequisites
 - Node.js 18+ installed
 - Discord Bot Token
-- OpenRouter API Key (supports free models!)
+- OpenAI API Key
 
 ### Step 1: Clone and Install
 
@@ -67,14 +67,14 @@ npm install
    - **Message Content Intent** (Required)
    - Server Members Intent (optional)
 
-### Step 3: Get Your OpenRouter API Key
+### Step 3: Get Your OpenAI API Key
 
-1. Go to [OpenRouter.ai](https://openrouter.ai/)
+1. Go to [OpenAI Platform](https://platform.openai.com/)
 2. Sign up or log in
-3. Go to [Keys](https://openrouter.ai/keys)
-4. Click "Create Key"
-5. Copy the key
-6. **Optional:** Add credits or use free models (like llama-3.1-8b-instruct:free)
+3. Go to [API Keys](https://platform.openai.com/api-keys)
+4. Click "Create new secret key"
+5. Copy the key (you won't be able to see it again!)
+6. Add credits to your account at [Billing](https://platform.openai.com/account/billing/overview)
 
 ### Step 4: Configure Environment Variables
 
@@ -86,16 +86,11 @@ Edit `.env` and add your tokens:
 
 ```env
 DISCORD_TOKEN=your_discord_bot_token_here
-OPENROUTER_API_KEY=your_openrouter_api_key_here
-OPENROUTER_MODEL=meta-llama/llama-3.1-8b-instruct:free
+OPENAI_API_KEY=your_openai_api_key_here
 BOT_PREFIX=!
 ```
 
-**Available Models:**
-- `meta-llama/llama-3.1-8b-instruct:free` (Free!)
-- `meta-llama/llama-3.1-70b-instruct` (Paid but better)
-- `anthropic/claude-3.5-sonnet` (Premium)
-- See more at [OpenRouter Models](https://openrouter.ai/models)
+The bot uses **GPT-4o-mini** by default - it's fast, cheap, and perfect for this use case!
 
 ### Step 5: Install the Bot
 
@@ -223,11 +218,11 @@ Discord-bot-open-ai/
 - Verify Message Content Intent is enabled in Discord Developer Portal
 - Check console for errors
 
-### OpenRouter AI errors
+### OpenAI errors
 - Verify your API key is correct in `.env`
-- Check you have credits in your OpenRouter account (or use free models)
+- Check you have credits in your OpenAI account
 - Ensure API key has proper permissions
-- Try a different model if one isn't working
+- GPT-4o-mini is very cheap (~$0.15 per 1M input tokens)
 
 ### Permission errors
 - Make sure bot has "Send Messages" and "Embed Links" permissions
@@ -292,4 +287,4 @@ If you encounter issues:
 
 ---
 
-Built with ❤️ using Discord.js and OpenRouter.ai | Gen Z vibes only fr fr
+Built with ❤️ using Discord.js and OpenAI | Gen Z vibes only fr fr

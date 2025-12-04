@@ -1,14 +1,14 @@
 {
   "name": "discord-bot-openrouter-carrier",
   "version": "2.0.0",
-  "description": "Discord bot with OpenRouter.ai integration, Gen Z personality, conversational memory, and carrier deal finder",
+  "description": "Discord bot with OpenAI integration, Gen Z personality, persistent memory, and carrier deal finder",
   "main": "index.js",
   "type": "module",
   "scripts": {
     "start": "node index.js",
     "dev": "node --watch index.js"
   },
-  "keywords": ["discord", "bot", "openrouter", "ai", "carrier", "cellular", "genz", "conversational"],
+  "keywords": ["discord", "bot", "openai", "ai", "carrier", "cellular", "genz", "conversational", "persistent-memory"],
   "author": "",
   "license": "MIT",
   "dependencies": {

@@ -14,10 +14,9 @@ const client = new Client({
   ],
 });
 
-// Initialize OpenRouter AI (uses OpenAI SDK)
-const openrouter = new OpenAI({
-  apiKey: process.env.OPENROUTER_API_KEY,
-  baseURL: 'https://openrouter.ai/api/v1',
+// Initialize OpenAI
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
 const PREFIX = process.env.BOT_PREFIX || '!';
@@ -99,7 +98,7 @@ client.on('ready', () => {
   console.log(`✅ Bot logged in as ${client.user.tag}`);
   console.log(`📡 Serving ${client.guilds.cache.size} servers`);
   console.log(`👤 User-installable: Ready for DMs and server use!`);
-  console.log(`🤖 Powered by OpenRouter.ai - Conversational mode enabled!`);
+  console.log(`🤖 Powered by OpenAI - Conversational mode enabled!`);
   console.log(`💾 Persistent memory: ${getTotalMessages()} messages from ${getUniqueUserCount()} users`);
   client.user.setActivity('!help for commands', { type: 'WATCHING' });
 });
@@ -192,8 +191,6 @@ async function handleAskCommand(message, isReply = false) {
     return message.reply('yo what did u wanna ask me lol just say !ask and then ur question');
   }
 
-  const thinkingMsg = await message.reply('typing...');
-
   try {
     const userId = message.author.id;
 
@@ -203,8 +200,8 @@ async function handleAskCommand(message, isReply = false) {
     // Get recent conversation history from database (last 10 messages)
     const history = getConversationHistory(userId, 10);
 
-    const completion = await openrouter.chat.completions.create({
-      model: process.env.OPENROUTER_MODEL || 'meta-llama/llama-3.1-8b-instruct:free',
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
       messages: [
         {
           role: 'system',
@@ -221,10 +218,10 @@ async function handleAskCommand(message, isReply = false) {
     // Save assistant response to database
     saveMessage(userId, 'assistant', answer);
 
-    await thinkingMsg.edit(answer);
+    await message.reply(answer);
   } catch (error) {
-    console.error('OpenRouter AI Error:', error);
-    await thinkingMsg.edit('bruh my brain crashed rn try again in a sec lmao');
+    console.error('OpenAI Error:', error);
+    await message.reply('bruh my brain crashed rn try again in a sec lmao');
   }
 }
 
@@ -498,9 +495,9 @@ if (!process.env.DISCORD_TOKEN) {
   process.exit(1);
 }
 
-if (!process.env.OPENROUTER_API_KEY) {
-  console.error('⚠️  OPENROUTER_API_KEY not found in environment variables!');
-  console.error('OpenRouter AI features will not work. Please add your API key to .env file.');
+if (!process.env.OPENAI_API_KEY) {
+  console.error('⚠️  OPENAI_API_KEY not found in environment variables!');
+  console.error('OpenAI features will not work. Please add your API key to .env file.');
 }
 
 client.login(process.env.DISCORD_TOKEN);
